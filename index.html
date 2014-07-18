@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>css3d-3d</title>
+<style>
+body {
+	margin: 0;
+	overflow: hidden;
+	width: 100%;
+	height: 100%;
+	position: absolute;
+}
+
+#viewboxes {
+	min-width: 1290px;
+	width: 100%;
+	height: 100%;
+}
+
+#viewbox0, #viewbox1 {
+	border: 0px solid black;
+	width: 50%;
+	height: 100%;
+}
+
+#viewbox0 {
+	float: left;
+}
+
+#viewbox1 {
+	float: right;
+}
+
+</style>
+</head>
+<body>
+
+	<div id="viewboxes">
+		<div id="viewbox0"></div>
+		<div id="viewbox1"></div>
+	</div>
+
+	<script src="js/three.min.js"></script>
+	<script src="js/CSS3DRenderer.js"></script>
+	<script src="js/VREffect.js"></script>
+	<script src="js/VRControls.js"></script>
+	<script src="js/main.js"></script>
+</body>
+</html>
