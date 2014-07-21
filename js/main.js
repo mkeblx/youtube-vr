@@ -6,8 +6,6 @@ var time = Date.now();
 var scene, camera, container, renderer, controls;
 var scene2, camera2, renderer2, controls2;
 
-var element, element2;
-
 init();
 animate();
 
@@ -47,42 +45,61 @@ function init() {
 	crossDomain = false;
 	var screens = [{
 		url: 'http://threejs.org',//'http://dev.quasi.co/css3d-3d/embed.html',
-		position: [0, -25, -1100],
+		position: [0, 0, -1100],
 		rotation: [0, 0, 0],
-		size: 1
+		size: 1,
+		aspect: 13/9
 	}];
 
 	var screen;
 
-	for ( var i = 0; i < screens.length; i++ ) {
+	for (var i = 0; i < screens.length; i++) {
 		screen = screens[i];
 
-		element = document.createElement('iframe');
-		element.setAttribute('src', screens[i].url);
+		var win = document.createElement('div');
+
+		var element = document.createElement('iframe');
+		element.setAttribute('src', screen.url);
 		//element.setAttribute('seamless', true);
-		element.style.width = '1300px';
-		element.style.height = '900px';
+		element.style.width = Math.round(900*screen.aspect)+'px';
+		element.style.height = 900+'px';
 		var color = new THREE.Color( Math.random() * 0xffffff ).getStyle();
 		element.style.background = color;
 
-		var r0 = Math.random(), r1 = Math.random(), r2 = Math.random(), r3 = Math.random();
-		var r4 = Math.random(), r5 = Math.random(), r6 = Math.random(), r7 = Math.random();
+		var navBar = document.createElement('input');
+		navBar.setAttribute('type', 'text');
+		navBar.className = 'nav-bar';
+		navBar.value = screen.url;
 
-		var object = new THREE.CSS3DObject( element );
+		win.appendChild(navBar);
+		win.appendChild(element);
+
+		var object = new THREE.CSS3DObject(win);
 		object.position.fromArray(screen.position);
 		object.rotation.fromArray(screen.rotation);
-		//object.scale.fromArray(screen.scale);
-		scene.add( object );
+		//object.scale.set(screen.scale, screen.scale, screen.scale);
+		scene.add(object);
 
 
-		element2 = element.cloneNode(true);
+		var win2 = win.cloneNode(true);
+		var element2 = win2.getElementsByTagName('iframe')[0];
 
-		var object2 = new THREE.CSS3DObject( element2 );
+
+		var object2 = new THREE.CSS3DObject(win2);
 		object2.position.copy(object.position);
 		object2.rotation.copy(object.rotation);
-		//object2.scale.copy(object.scale);
-		scene2.add( object2 );
+		object2.scale.copy(object.scale);
+		scene2.add(object2);
 
+
+		$(navBar).keypress(function(e){
+			if (e.which == 13) { // enter
+				var url = navBar.value;
+
+				element.setAttribute('src', url);
+				element2.setAttribute('src', url);
+			}
+		});
 
 		/*var geometry = new THREE.PlaneGeometry( 100, 100 );
 		var mesh = new THREE.Mesh( geometry, material );
@@ -91,6 +108,7 @@ function init() {
 		mesh.scale.copy( object.scale );
 		scene.add( mesh );*/
 	}
+
 
 }
 
@@ -105,7 +123,7 @@ function animate() {
 	var doc, doc2;
 
 
-	if (!crossDomain) {
+	if (!crossDomain && false) {
 		//doc = element.contentDocument || element.contentWindow.document || null;
 		//doc2 = element2.contentDocument || element2.contentWindow.document || null;
 

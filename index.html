@@ -4,6 +4,11 @@
 	<meta charset="utf-8">
 	<title>css3d-3d</title>
 <style>
+*, *:before, *:after {
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
 body {
 	margin: 0;
 	overflow: hidden;
@@ -32,6 +37,13 @@ body {
 	float: right;
 }
 
+.nav-bar {
+	background-color: #f1f1f1;
+	font-size: 20px;
+	width: 100%;
+	padding: 6px;
+}
+
 </style>
 </head>
 <body>
@@ -46,13 +58,13 @@ body {
 	<script src="js/libs/tween.min.js"></script>
 	<script src="js/libs/three.min.js"></script>
 
-	<script src="js/postprocessing/RenderPass.js"></script>
-	<script src="js/postprocessing/ShaderPass.js"></script>
-	<script src="js/postprocessing/EffectComposer.js"></script>
-	<script src="js/postprocessing/ShaderPass.js"></script>
-	<script src="js/postprocessing/MaskPass.js"></script>
-	<script src="js/postprocessing/SavePass.js"></script>
-	<script src="js/shaders/CopyShader.js"></script>
+	<!--<script src="js/libs/postprocessing/RenderPass.js"></script>
+	<script src="js/libs/postprocessing/ShaderPass.js"></script>
+	<script src="js/libs/postprocessing/EffectComposer.js"></script>
+	<script src="js/libs/postprocessing/ShaderPass.js"></script>
+	<script src="js/libs/postprocessing/MaskPass.js"></script>
+	<script src="js/libs/postprocessing/SavePass.js"></script>
+	<script src="js/libs/shaders/CopyShader.js"></script>-->
 
 	<script src="js/libs/CSS3DRenderer.js"></script>
 
