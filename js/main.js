@@ -11,6 +11,8 @@ animate();
 
 var crossDomain = 0;
 
+var once = true;
+
 function init() {
 
 	var w = window.innerWidth, h = window.innerHeight;
@@ -109,10 +111,16 @@ function init() {
 		scene.add( mesh );*/
 	}
 
-
+  window.addEventListener('resize', resize, false);
 }
 
-var once = true;
+function resize() {
+	var w = window.innerWidth, h = window.innerHeight;
+
+	renderer.setSize(w/2, h);
+	renderer2.setSize(w/2, h);
+}
+
 
 function animate() {
 	requestAnimationFrame(animate);
