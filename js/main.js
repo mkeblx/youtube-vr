@@ -3,229 +3,419 @@
 var clock = new THREE.Clock();
 var time = Date.now();
 
+var vrHMD, vrSensor;
+
+var cssContainer;
+var cssCamera;
+
 var container;
 
-var renderer, renderer2;
-var scene, scene2;
-var head, head2;
-var camera, camera2;
-var controls, controls2;
+var renderer;
+var scene;
+var head;
+var camera;
+var controls;
 
 var w, h;
 
-window.onload = load;
+var updateFns = [];
+
+var players = [];
+var player; // current
+
+var videos = [
+  'OlXrjTh7vHc'
+];
+
+var ytReady = false;
+
+
+// helper function to convert a quaternion into a matrix, optionally
+// inverting the quaternion along the way
+function matrixFromOrientation(q, inverse) {
+  var m = Array(16);
+
+  var x = q.x, y = q.y, z = q.z, w = q.w;
+
+  // if inverse is given, invert the quaternion first
+  if (inverse) {
+    x = -x; y = -y; z = -z;
+    var l = Math.sqrt(x*x + y*y + z*z + w*w);
+    if (l == 0) {
+      x = y = z = 0;
+      w = 1;
+    } else {
+      l = 1/l;
+      x *= l; y *= l; z *= l; w *= l;
+    }
+  }
+
+  var x2 = x + x, y2 = y + y, z2 = z + z;
+  var xx = x * x2, xy = x * y2, xz = x * z2;
+  var yy = y * y2, yz = y * z2, zz = z * z2;
+  var wx = w * x2, wy = w * y2, wz = w * z2;
+
+  m[0] = 1 - (yy + zz);
+  m[4] = xy - wz;
+  m[8] = xz + wy;
+
+  m[1] = xy + wz;
+  m[5] = 1 - (xx + zz);
+  m[9] = yz - wx;
+
+  m[2] = xz - wy;
+  m[6] = yz + wx;
+  m[10] = 1 - (xx + yy);
+
+  m[3] = m[7] = m[11] = 0;
+  m[12] = m[13] = m[14] = 0;
+  m[15] = 1;
+
+  return m;
+}
+
+function cssMatrixFromElements(e) {
+  return 'matrix3d(' + e.join(',') + ')';
+}
+
+function cssMatrixFromOrientation(q, inverse) {
+  return cssMatrixFromElements(matrixFromOrientation(q, inverse));
+}
+
+
+// the camera's position, as a css transform string.  For right now,
+// we want it just in the middle.
+// XXX BUG this rotateZ should not be needed; the view rendering is flipped.
+// XXX BUG the rotateY should not be needed; the default viewport
+// is not oriented how I expected it to be oriented
+var cssCameraPositionTransform = "translate3d(0, 0, 0) rotateZ(180deg) rotateY(180deg)";
+
+function frameCallback() {
+  requestAnimationFrame(frameCallback);
+
+  var state = vrSensor.getState();
+  var cssOrientationMatrix = cssMatrixFromOrientation(state.orientation, true);
+
+  cssCamera.style.transform = cssOrientationMatrix + " " + cssCameraPositionTransform;
+}
+
+function vrDeviceCallback(vrdevs) {
+  for (var i = 0; i < vrdevs.length; ++i) {
+    if (vrdevs[i] instanceof HMDVRDevice) {
+      vrHMD = vrdevs[i];
+      break;
+    }
+  }
+
+  if (!vrHMD)
+    return;
+
+  // Then, find that HMD's position sensor
+  for (var i = 0; i < vrdevs.length; ++i) {
+    if (vrdevs[i] instanceof PositionSensorVRDevice &&
+        vrdevs[i].hardwareUnitId == vrHMD.hardwareUnitId)
+    {
+      vrSensor = vrdevs[i];
+      break;
+    }
+  }
+
+  if (!vrSensor) {
+    alert("Found a HMD, but didn't find its orientation sensor?");
+  }
+
+  load();
+}
+
+function onkey(event) {
+  switch (String.fromCharCode(event.charCode)) {
+  case 'f':
+    cssContainer.mozRequestFullScreen({ vrDisplay: vrHMD });
+    break;
+  case ' ':
+  case 'p':
+    togglePlay();
+    break;
+  case 'm':
+    toggleMute();
+    break;
+  case 'z':
+    vrSensor.zeroSensor();
+    break;
+  }
+}
+
+function _init() {
+  cssCamera = document.getElementById("camera");
+  cssContainer = document.getElementById("container");
+
+  updateFns.push(frameCallback);
+
+  if (navigator.getVRDevices)
+    navigator.getVRDevices().then(vrDeviceCallback);
+}
+
+window.addEventListener("load", _init, false);
+window.addEventListener("keypress", onkey, true);
+
+
+
+function onYouTubeIframeAPIReady() {
+  ytReady = true;
+
+  var opts = {
+    width: '640',
+    height: '360',
+    videoId: videos[0],
+    events: {
+      'onReady': onPlayerReady,
+      'onPlaybackQualityChange': onPlayerPlaybackQualityChange,
+      'onStateChange': onPlayerStateChange,
+      'onError': onError
+    },
+    playerVars: {
+      controls: 1,
+      enablejsapi: 1,
+      //end: 5,
+      showinfo: 0
+    }
+  };
+
+  var _player = new YT.Player('player', opts);
+  players.push(_player);
+
+  player = players[0];
+}
+
+function onPlayerReady(event) {
+  event.target.playVideo();
+}
+
+function onPlayerPlaybackQualityChange(event) {
+
+}
+
+function onPlayerStateChange(event) {
+
+}
+
+function onError(event) {
+  var errNo = event.data;
+
+  var errors = {
+    2: 'The request contains an invalid parameter value.',
+    5: 'The requested content cannot be played in an HTML5 player.',
+    100: 'The video requested was not found.',
+    101: 'The owner of the requested video does not allow it to be played in embedded players.',
+    150: 'The owner of the requested video does not allow it to be played in embedded players.' // same as 101
+  };
+
+  console.log(errors[errNo]);
+}
+
+function setVideo(videoId) {
+  if (!ytReady)
+    return;
+
+  player.loadVideoById(videoId);
+}
+
+function togglePlay() {
+  var state = player.getPlayerState();
+
+  /* -states-
+  YT.PlayerState.ENDED
+  YT.PlayerState.PLAYING
+  YT.PlayerState.PAUSED
+  YT.PlayerState.BUFFERING
+  YT.PlayerState.CUED
+  */
+
+  if (state == YT.PlayerState.PLAYING) {
+    pauseVideo();
+  } else {
+    playVideo();
+  }
+}
+
+function playVideo() {
+  player.playVideo();
+}
+
+function pauseVideo() {
+  player.pauseVideo();
+}
+
+function seekTo(seconds) {
+  player.seekTo(seconds, true);
+}
+
+function stopVideo() {
+  player.stopVideo();
+}
+
+function toggleMute() {
+  if (player.isMuted())
+    player.unMute();
+  else
+    player.mute();
+}
+
+function setVolume(volume) {
+  volume = Math.max(Math.min(volume, 100), 0);
+
+  player.setVolume(volume);
+}
+
+function getVolume() {
+  return player.getVolume();
+}
+
+function getCurrentTime() {
+  return player.getCurrentTime();
+}
+
+function getDuration() {
+  return player.getDuration();
+}
+
+function YouTubeGetID(url){
+  //var regex = url.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/);
+
+  var ID = '';
+  url = url.replace(/(>|<)/gi,'').split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/)/);
+  if (url[2] !== undefined) {
+    ID = url[2].split(/[^0-9a-z_]/i);
+    ID = ID[0];
+  }
+  else {
+    ID = url;
+  }
+  return ID;
+}
+
+
 
 function load() {
-	init();
-	animate();
+  var tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  var firstScriptTag = document.getElementsByTagName('script')[0];
+  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+  console.log('loading');
+
+  setInterval(function(){
+    var t = getCurrentTime();
+    var d = getDuration();
+    console.log(t + ' : ' + d + ' : ' + (t/d*100).toFixed(1) + '%');
+  }, 2000);
+
+  init();
+  animate();
 }
 
 function init() {
-	w = window.innerWidth, h = window.innerHeight;
+  w = window.innerWidth, h = window.innerHeight;
 
-	var IPD = 150;
+  camera = new THREE.PerspectiveCamera(75, 640 / 800, 1, 5000);
 
-	head = new THREE.Object3D();
-	camera = new THREE.PerspectiveCamera(75, 640 / 800, 1, 5000);
-	camera.position.x = -IPD;
-	//head.add(camera);
+  //setupRendering();
+  setupScene();
+  setupControls();
 
-	head2 = new THREE.Object3D();
-	camera2 = new THREE.PerspectiveCamera(75, 640 / 800, 1, 5000);
-	camera2.position.x = IPD;
-	//head2.add(camera2);
+  setupEvents();
+}
 
-	setupRendering();
-	setupScene();
-	setupControls();
+function setupRendering() {
+  renderer = new THREE.CSS3DRenderer();
+  renderer.setSize( w, h );
+  renderer.domElement.style.position = 'absolute';
+  renderer.domElement.style.top = 0;
+  //document.getElementById('viewbox0').appendChild(renderer.domElement);
+}
+
+function setupControls() {
+  //controls = new THREE.VRControls(camera);
+}
+
+function setupScene() {
+  scene = new THREE.Scene();
+}
+
+function setupEvents() {
+  $('#go').on('click', navigate);
+  $('#url').keypress(function(e) {
+    if (e.which == 13) {
+      navigate();
+    }
+  }); 
 
   window.addEventListener('resize', resize, false);
 }
 
-function setupRendering() {
-	renderer = new THREE.CSS3DRenderer();
-	renderer.setSize( w/2, h );
-	renderer.domElement.style.position = 'absolute';
-	renderer.domElement.style.top = 0;
-	document.getElementById('viewbox0').appendChild(renderer.domElement);
 
+function navigate() {
+  var url = $('#url').val();
 
-	renderer2 = new THREE.CSS3DRenderer();
-	renderer2.setSize( w/2, h );
-	renderer2.domElement.style.position = 'absolute';
-	renderer2.domElement.style.top = 0;
-	document.getElementById('viewbox1').appendChild(renderer2.domElement);
-}
+  var videoid = YouTubeGetID(url);
 
-function setupControls() {
-	controls = new THREE.VRControls(camera);
-	controls2 = new THREE.VRControls(camera2);	
-}
+  console.log(videoid);
 
-function setupScene() {
-	scene = new THREE.Scene();
-	scene2 = new THREE.Scene();
+  if (videoid == null)
+    return;
 
+  setVideo(videoid);
+  return;
 
-	var screens = [{
-		url: 'http://threejs.org',//'http://dev.quasi.co/css3d-3d/threejs.html',
-		position: [0, 0, -1000],
-		rotation: [0, 0, 0],
-		size: 1,
-		aspect: 13/9
-	}];
+  var serviceUrl = 'http://www.youtube.com/oembed?url='+encodeURI(url)+'&format=json';
 
-	var screen;
+  console.log(serviceUrl);
 
-	for (var i = 0; i < screens.length; i++) {
-		screen = screens[i];
+  $.ajax({
+    url: 'http://query.yahooapis.com/v1/public/yql',
+    data: {
+      q: "select * from json where url ='"+serviceUrl+"'",
+      format: "json"
+    },
+    dataType: "jsonp",
+    success: function(data) {
+      console.log(data);
+    },
+    error: function(result) {
+      console.log("No data found.");
+    }
+  });
 
-		var win = document.createElement('div');
-
-		var element = document.createElement('iframe');
-		element.setAttribute('src', screen.url);
-		//element.setAttribute('seamless', true);
-		element.style.width = Math.round(900*screen.aspect)+'px';
-		element.style.height = 900+'px';
-		var color = new THREE.Color( Math.random() * 0xffffff ).getStyle();
-		element.style.background = color;
-
-		var navBar = document.createElement('input');
-		navBar.setAttribute('type', 'text');
-		navBar.className = 'nav-bar';
-		navBar.value = screen.url;
-
-		win.appendChild(navBar);
-		win.appendChild(element);
-
-		var object = new THREE.CSS3DObject(win);
-		object.position.fromArray(screen.position);
-		object.rotation.fromArray(screen.rotation);
-		//object.scale.set(screen.scale, screen.scale, screen.scale);
-		scene.add(object);
-
-
-		var win2 = win.cloneNode(true);
-		var element2 = win2.getElementsByTagName('iframe')[0];
-		var navBar2 = win2.getElementsByTagName('input')[0];
-
-
-		var object2 = new THREE.CSS3DObject(win2);
-		object2.position.copy(object.position);
-		object2.rotation.copy(object.rotation);
-		object2.scale.copy(object.scale);
-		scene2.add(object2);
-
-
-		$(navBar).click(function(e){
-			$(this).select();
-			$(navBar2).val('');
-		});
-
-		$(navBar).keypress(function(e){
-			if (e.which == 13) { // enter
-				var url = navBar.value;
-
-				if (!/^https?:\/\//i.test(url)) {
-					url = 'http://' + url;
-				}
-				navBar.value = url;
-				navBar2.value = url;
-
-				element.setAttribute('src', url);
-				element2.setAttribute('src', url);
-			}
-		});
-
-		/*var geometry = new THREE.PlaneGeometry( 100, 100 );
-		var mesh = new THREE.Mesh( geometry, material );
-		mesh.position.copy( object.position );
-		mesh.rotation.copy( object.rotation );
-		mesh.scale.copy( object.scale );
-		scene.add( mesh );*/
-	}
-
-
-	var elSize = [200,150];
-	var elements = [
-		{
-			position: [0, 0, -1000],
-			rotation: [0, 0, 0],
-			src: 'img/threejs/100000stars.jpg'
-		}
-	];
-
-	for (var i = 0; i < elements.length; i++) {
-		continue;
-
-		var el = elements[i];
-
-		var div = document.createElement('div');
-		div.className = 'img';
-		div.style.width = elSize[0]+'px';
-		div.style.height = elSize[1]+'px';
-		div.style.backgroundImage = 'url('+el.src+')';
-
-		//var img = document.createElement('img');
-		//img.setAttribute('src', el.src);
-
-		//var color = new THREE.Color( Math.random() * 0xffffff ).getStyle();
-		//element.style.background = color;
-
-		//div.appendChild(img);
-
-		var object = new THREE.CSS3DObject(div);
-		object.position.fromArray(el.position);
-		//object.rotation.fromArray(screen.rotation);
-		//object.scale.set(screen.scale, screen.scale, screen.scale);
-		scene.add(object);
-
-		$(div).hover(function(e){
-			console.log('hover');
-			//div.className = 'img m';
-			var $this = $(this);
-			//$this.remove();
-		});
-		/*var win2 = win.cloneNode(true);
-		var element2 = win2.getElementsByTagName('iframe')[0];
-
-		var object2 = new THREE.CSS3DObject(win2);
-		object2.position.copy(object.position);
-		object2.rotation.copy(object.rotation);
-		object2.scale.copy(object.scale);
-		scene2.add(object2);*/
-	}
 }
 
 function resize() {
-	w = window.innerWidth, h = window.innerHeight;
+  w = window.innerWidth, h = window.innerHeight;
 
-	renderer.setSize(w/2, h);
-	renderer2.setSize(w/2, h);
+  //renderer.setSize(w, h);
 }
 
 
 function animate(t) {
-	requestAnimationFrame(animate);
-	var dt = clock.getDelta();
+  requestAnimationFrame(animate);
+  var dt = clock.getDelta();
 
-	var top;
-	var doc, doc2;
+  update(t);
+  //render(t);
 
-	update(t);
-	render(t);
-
-	time = Date.now();
+  time = Date.now();
 }
 
 function update(t) {
-	TWEEN.update();
+  TWEEN.update(t);
 
-	controls.update();
-	controls2.update();
+  for (var i = 0; i < updateFns.length; i++) {
+    var fn = updateFns[i];
+    fn(t);
+  }
+
+  //controls.update();
 }
 
 function render(t) {
-	renderer.render(scene, camera);
-	renderer2.render(scene2, camera2);
+  renderer.render(scene, camera);
 }

@@ -1,7 +1,7 @@
 {
-  "name": "css3d-3d",
+  "name": "youtube-vr",
   "version": "0.0.1",
-  "description": "3d css3d rendering",
+  "description": "YouTube VR application WebVR",
   "author": "@mkeblx",
   "license": "MIT",
   "devDependencies": {
