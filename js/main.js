@@ -8,6 +8,8 @@ var vrHMD, vrSensor;
 var cssContainer;
 var cssCamera;
 
+var screenDist = 250;
+
 var container;
 
 var renderer;
@@ -30,59 +32,6 @@ var videos = [
 var ytReady = false;
 
 
-// helper function to convert a quaternion into a matrix, optionally
-// inverting the quaternion along the way
-function matrixFromOrientation(q, inverse) {
-  var m = Array(16);
-
-  var x = q.x, y = q.y, z = q.z, w = q.w;
-
-  // if inverse is given, invert the quaternion first
-  if (inverse) {
-    x = -x; y = -y; z = -z;
-    var l = Math.sqrt(x*x + y*y + z*z + w*w);
-    if (l == 0) {
-      x = y = z = 0;
-      w = 1;
-    } else {
-      l = 1/l;
-      x *= l; y *= l; z *= l; w *= l;
-    }
-  }
-
-  var x2 = x + x, y2 = y + y, z2 = z + z;
-  var xx = x * x2, xy = x * y2, xz = x * z2;
-  var yy = y * y2, yz = y * z2, zz = z * z2;
-  var wx = w * x2, wy = w * y2, wz = w * z2;
-
-  m[0] = 1 - (yy + zz);
-  m[4] = xy - wz;
-  m[8] = xz + wy;
-
-  m[1] = xy + wz;
-  m[5] = 1 - (xx + zz);
-  m[9] = yz - wx;
-
-  m[2] = xz - wy;
-  m[6] = yz + wx;
-  m[10] = 1 - (xx + yy);
-
-  m[3] = m[7] = m[11] = 0;
-  m[12] = m[13] = m[14] = 0;
-  m[15] = 1;
-
-  return m;
-}
-
-function cssMatrixFromElements(e) {
-  return 'matrix3d(' + e.join(',') + ')';
-}
-
-function cssMatrixFromOrientation(q, inverse) {
-  return cssMatrixFromElements(matrixFromOrientation(q, inverse));
-}
-
-
 // the camera's position, as a css transform string.  For right now,
 // we want it just in the middle.
 // XXX BUG this rotateZ should not be needed; the view rendering is flipped.
@@ -91,8 +40,6 @@ function cssMatrixFromOrientation(q, inverse) {
 var cssCameraPositionTransform = "translate3d(0, 0, 0) rotateZ(180deg) rotateY(180deg)";
 
 function frameCallback() {
-  requestAnimationFrame(frameCallback);
-
   var state = vrSensor.getState();
   var cssOrientationMatrix = cssMatrixFromOrientation(state.orientation, true);
 
@@ -127,37 +74,68 @@ function vrDeviceCallback(vrdevs) {
   load();
 }
 
+/*
+TODO:
+-arrows: up/down volume 5%, left/right seek
+-1-9: n*10% seek
+*/
 function onkey(event) {
-  switch (String.fromCharCode(event.charCode)) {
-  case 'f':
-    cssContainer.mozRequestFullScreen({ vrDisplay: vrHMD });
-    break;
-  case ' ':
-  case 'p':
-    togglePlay();
-    break;
-  case 'm':
-    toggleMute();
-    break;
-  case 'z':
-    vrSensor.zeroSensor();
-    break;
+  console.log(event.which);
+  switch (event.which) {
+    case 70: // f
+      console.log('fullscreen');
+      cssContainer.mozRequestFullScreen({ vrDisplay: vrHMD });
+      break;
+    case 32: // space
+    case 107: // k
+      togglePlay();
+      break;
+    case 77: // m
+      toggleMute();
+      break;
+    case 49: // numbers
+    case 50:
+    case 51:
+    case 52:
+    case 53:
+    case 54:
+    case 55:
+    case 56:
+    case 57:
+      seekToPc((event.which-49+1)*10);
+      break;
+    case 37: // left
+      seekBy(-5);
+      break;
+    case 38: // up
+      moveScreen(1);
+      break;
+    case 39: // right
+      seekBy(5);
+      break;
+    case 40: // down
+      moveScreen(-1);
+      break;
+    case 90: // z
+      vrSensor.zeroSensor();
+      break;
   }
 }
 
 function _init() {
-  cssCamera = document.getElementById("camera");
-  cssContainer = document.getElementById("container");
+  cssCamera = document.getElementById('camera');
+  cssContainer = document.getElementById('container');
 
   updateFns.push(frameCallback);
 
-  if (navigator.getVRDevices)
+  if (navigator.getVRDevices) {
     navigator.getVRDevices().then(vrDeviceCallback);
+  } else {
+
+  }
 }
 
-window.addEventListener("load", _init, false);
-window.addEventListener("keypress", onkey, true);
-
+$(document).ready(_init);
 
 
 function onYouTubeIframeAPIReady() {
@@ -177,18 +155,20 @@ function onYouTubeIframeAPIReady() {
       controls: 1,
       enablejsapi: 1,
       //end: 5,
-      showinfo: 0
+      showinfo: 0,
+      theme: 'dark'
     }
   };
 
-  var _player = new YT.Player('player', opts);
-  players.push(_player);
+  var _player = new YT.Player('main_player', opts);
 
+  players.push(_player);
   player = players[0];
 }
 
 function onPlayerReady(event) {
-  event.target.playVideo();
+  //_player.cueVideoById(videos[0]);
+  //event.target.playVideo();
 }
 
 function onPlayerPlaybackQualityChange(event) {
@@ -250,6 +230,20 @@ function seekTo(seconds) {
   player.seekTo(seconds, true);
 }
 
+function seekToPc(percent) {
+  var dur = getDuration();
+  var secs = percent/100 * dur;
+  seekTo(secs);
+}
+
+function seekBy(percent) {
+  var r = getPlayedRatio();
+  var dur = getDuration();
+  var pc = Math.max(Math.min(r*100 + percent, 100), 0);
+  var secs = pc/100 * dur;
+  seekTo(secs);
+}
+
 function stopVideo() {
   player.stopVideo();
 }
@@ -277,6 +271,18 @@ function getCurrentTime() {
 
 function getDuration() {
   return player.getDuration();
+}
+
+function getPlayedRatio() {
+  var t = getCurrentTime();
+  var d = getDuration();
+  var r = (t/d).toFixed(3);
+  return r;
+}
+
+function moveScreen(amount) {
+  screenDist += amount*25;
+  $('#main_pane').css('transform', 'rotateY(0deg) translate3d(0, 0, '+screenDist+'px) translate(-320px, -180px)');
 }
 
 function YouTubeGetID(url){
@@ -307,8 +313,11 @@ function load() {
   setInterval(function(){
     var t = getCurrentTime();
     var d = getDuration();
-    console.log(t + ' : ' + d + ' : ' + (t/d*100).toFixed(1) + '%');
-  }, 2000);
+    var pc = (t/d*100).toFixed(1)+'%';
+    //console.log(t + ' : ' + d + ' : ' + pc);
+
+    $('#progress').css('width', (t/d*100).toFixed(1)+'%');
+  }, 300);
 
   init();
   animate();
@@ -343,13 +352,15 @@ function setupScene() {
 }
 
 function setupEvents() {
+  $(document).on('keydown', onkey);
+
   $('#go').on('click', navigate);
   $('#url').keypress(function(e) {
     if (e.which == 13) {
       navigate();
     }
   }); 
-
+  
   window.addEventListener('resize', resize, false);
 }
 

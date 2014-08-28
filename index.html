@@ -6,6 +6,7 @@
 
 <script src="js/libs/combined.min.js"></script>
 <script src="js/libs/CSS3DRenderer.js"></script>
+<script src="js/helpers.js"></script>
 <script src="js/main.js"></script>
 </head>
 
@@ -20,6 +21,9 @@
  * entering fullscreen.  There's a -moz-full-screen selector that's useful for this.
  */
 body {
+  background-color: #000;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -88,11 +92,11 @@ body {
  * at 50% 50% should take care of that, but I'm not sure why it's not.  (It transforms
  * by half the width/height).
  */
-#pane1 {
+#main_pane {
   width: 640px;
   height: 360px;
   background: green;
-  transform: rotateY(0deg) translate3d(0, 0, 500px) translate(-320px, -180px);
+  transform: rotateY(0deg) translate3d(0, 0, 250px) translate(-320px, -180px);
 }
 
 #pane2 {
@@ -131,6 +135,33 @@ body {
   transform: translate(-500px, -500px) rotateX(90deg) translateZ(-200px);
   display: none;
 }
+
+#bot-bar {
+
+}
+
+#bot-bar.fade {
+  opacity: 0.3;
+}
+
+/* YT red: #cd201f */
+
+#progress-bar {
+  background-color: #444;
+  width: 640px;
+  height: 5px;
+}
+
+#progress-bar .loaded {
+  background-color: #888;
+}
+
+#progress-bar #progress {
+  display: block;
+  background-color: #cd201f;
+  height: 100%;
+  width: 10%;
+}
 </style>
 
 <div id="bar">
@@ -143,8 +174,12 @@ body {
        This and all its children will have transform-style: preserve-3d set via the class, as well as
        transform-origin set to 0,0 -->
   <div id="camera" class="threed">
-    <div id="pane1" class="threed"><div id="player"></div></div>
-    <div id="text1" class="threed pane">Youtube VR</div>
+    <div id="main_pane" class="threed">
+      <div id="main_player"></div>
+      <div id="bot">
+        <div id="progress-bar"><span id="progress"></span></div>
+      </div>
+    </div>
     <div id="bottom" class="threed"></div>
   </div>
 </div>
