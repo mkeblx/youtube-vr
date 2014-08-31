@@ -8,7 +8,7 @@ var vrHMD, vrSensor;
 var cssContainer;
 var cssCamera;
 
-var screenDist = 250;
+var screenDist = 500;
 
 var container;
 
@@ -28,6 +28,7 @@ var player; // current
 var videos = [
   'OlXrjTh7vHc'
 ];
+var _videoId = null;
 
 var ytReady = false;
 
@@ -141,10 +142,12 @@ $(document).ready(_init);
 function onYouTubeIframeAPIReady() {
   ytReady = true;
 
+  var videoId = _videoId || videos[0];
+
   var opts = {
     width: '640',
     height: '360',
-    videoId: videos[0],
+    videoId: videoId,
     events: {
       'onReady': onPlayerReady,
       'onPlaybackQualityChange': onPlayerPlaybackQualityChange,
@@ -303,6 +306,11 @@ function YouTubeGetID(url){
 
 
 function load() {
+  var hash = window.location.hash.substr(1);
+  if (hash != '') {
+    _videoId = hash;
+  }
+
   var tag = document.createElement('script');
   tag.src = 'https://www.youtube.com/iframe_api';
   var firstScriptTag = document.getElementsByTagName('script')[0];
