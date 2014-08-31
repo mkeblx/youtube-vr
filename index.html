@@ -95,8 +95,17 @@ body {
 #main_pane {
   width: 640px;
   height: 360px;
-  background: green;
   transform: rotateY(0deg) translate3d(0, 0, 500px) translate(-320px, -180px);
+}
+
+#help_pane {
+  width: 640px;
+  height: 360px;
+  transform: rotateY(90deg) translate3d(0, 0, 400px) translate(-320px, -180px);
+  color: #fff;
+  /*text-align: center;*/
+  font-size: 24px;
+  background-color: #444;
 }
 
 #pane2 {
@@ -151,6 +160,7 @@ body {
   height: 100%;
   width: 10%;
 }
+
 </style>
 
 <div id="bar">
@@ -169,7 +179,10 @@ body {
         <div id="progress-bar"><span id="progress"></span></div>
       </div>
     </div>
-    <div id="bottom" class="threed">hi there
+    <div id="help_pane">
+      <div>help options here</div>
+    </div>
+    <div id="bottom" class="threed">
       <img id="logo" src="img/YouTube-logo-light.png">
     </div>
   </div>

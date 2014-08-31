@@ -40,9 +40,16 @@ var ytReady = false;
 // is not oriented how I expected it to be oriented
 var cssCameraPositionTransform = "translate3d(0, 0, 0) rotateZ(180deg) rotateY(180deg)";
 
+var state;
+
 function frameCallback() {
-  var state = vrSensor.getState();
+  state = vrSensor.getState();
   var cssOrientationMatrix = cssMatrixFromOrientation(state.orientation, true);
+
+  var pos = state.position;
+  var s = 250;
+  var x = pos.x*s*-1, y = pos.y*s*-1, z = pos.z*s*-1;
+  cssCameraPositionTransform = "translate3d("+x+"px, "+y+"px, "+z+"px) rotateZ(180deg) rotateY(180deg)";
 
   cssCamera.style.transform = cssOrientationMatrix + " " + cssCameraPositionTransform;
 }
@@ -73,54 +80,6 @@ function vrDeviceCallback(vrdevs) {
   }
 
   load();
-}
-
-/*
-TODO:
--arrows: up/down volume 5%, left/right seek
--1-9: n*10% seek
-*/
-function onkey(event) {
-  console.log(event.which);
-  switch (event.which) {
-    case 70: // f
-      console.log('fullscreen');
-      cssContainer.mozRequestFullScreen({ vrDisplay: vrHMD });
-      break;
-    case 32: // space
-    case 107: // k
-      togglePlay();
-      break;
-    case 77: // m
-      toggleMute();
-      break;
-    case 49: // numbers
-    case 50:
-    case 51:
-    case 52:
-    case 53:
-    case 54:
-    case 55:
-    case 56:
-    case 57:
-      seekToPc((event.which-49+1)*10);
-      break;
-    case 37: // left
-      seekBy(-5);
-      break;
-    case 38: // up
-      moveScreen(1);
-      break;
-    case 39: // right
-      seekBy(5);
-      break;
-    case 40: // down
-      moveScreen(-1);
-      break;
-    case 90: // z
-      vrSensor.zeroSensor();
-      break;
-  }
 }
 
 function _init() {
@@ -172,6 +131,21 @@ function onYouTubeIframeAPIReady() {
 function onPlayerReady(event) {
   //_player.cueVideoById(videos[0]);
   //event.target.playVideo();
+  setInterval(updateProgress, 300);
+
+}
+
+function updateProgress() {
+  var state = player.getPlayerState();
+  if (state == YT.PlayerState.CUED || state == -1)
+    return;
+
+  var t = getCurrentTime();
+  var d = getDuration();
+  var pc = (t/d*100).toFixed(1)+'%';
+  //console.log(t + ' : ' + d + ' : ' + pc);
+
+  $('#progress').css('width', (t/d*100).toFixed(1)+'%');
 }
 
 function onPlayerPlaybackQualityChange(event) {
@@ -179,7 +153,7 @@ function onPlayerPlaybackQualityChange(event) {
 }
 
 function onPlayerStateChange(event) {
-
+  updateProgress();
 }
 
 function onError(event) {
@@ -318,15 +292,6 @@ function load() {
 
   console.log('loading');
 
-  setInterval(function(){
-    var t = getCurrentTime();
-    var d = getDuration();
-    var pc = (t/d*100).toFixed(1)+'%';
-    //console.log(t + ' : ' + d + ' : ' + pc);
-
-    $('#progress').css('width', (t/d*100).toFixed(1)+'%');
-  }, 300);
-
   init();
   animate();
 }
@@ -372,6 +337,54 @@ function setupEvents() {
   window.addEventListener('resize', resize, false);
 }
 
+function onkey(event) {
+  console.log(event.which);
+  switch (event.which) {
+    case 70: // f
+      console.log('fullscreen');
+      cssContainer.mozRequestFullScreen({ vrDisplay: vrHMD });
+      break;
+    case 32: // space
+    case 107: // k
+      togglePlay();
+      break;
+    case 77: // m
+      toggleMute();
+      break;
+    case 49: // numbers
+    case 50:
+    case 51:
+    case 52:
+    case 53:
+    case 54:
+    case 55:
+    case 56:
+    case 57:
+      seekToPc((event.which-49+1)*10);
+      break;
+    case 37: // left
+      seekBy(-5);
+      break;
+    case 38: // up
+      moveScreen(1);
+      break;
+    case 39: // right
+      seekBy(5);
+      break;
+    case 40: // down
+      moveScreen(-1);
+      break;
+    case 72: // h
+      toggleHelp();
+    case 90: // z
+      vrSensor.zeroSensor();
+      break;
+  }
+}
+
+function toggleHelp() {
+
+}
 
 function navigate() {
   var url = $('#url').val();
