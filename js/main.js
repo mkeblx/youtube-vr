@@ -33,6 +33,15 @@ var _videoId = null;
 var ytReady = false;
 
 
+var config = {
+  posScale: 300,
+  players: {
+    controls: 0
+  }
+};
+
+window.URL = window.URL || window.webkitURL || window.mozURL || window.msURL;
+
 // the camera's position, as a css transform string.  For right now,
 // we want it just in the middle.
 // XXX BUG this rotateZ should not be needed; the view rendering is flipped.
@@ -47,7 +56,7 @@ function frameCallback() {
   var cssOrientationMatrix = cssMatrixFromOrientation(state.orientation, true);
 
   var pos = state.position;
-  var s = 250;
+  var s = config.posScale;
   var x = pos.x*s*-1, y = pos.y*s*-1, z = pos.z*s*-1;
   cssCameraPositionTransform = "translate3d("+x+"px, "+y+"px, "+z+"px) rotateZ(180deg) rotateY(180deg)";
 
@@ -93,6 +102,33 @@ function _init() {
   } else {
 
   }
+
+
+}
+
+var vidSources = [];
+var webcamTexture; 
+
+function gotSources(sourceInfos) {
+  for (var i = 0; i != sourceInfos.length; ++i) {
+    var sourceInfo = sourceInfos[i];
+    if (sourceInfo.kind === 'video') {
+      vidSources.push({
+          label: sourceInfo.label || 'camera ' + (vidSources.length + 1),
+          id: sourceInfo.id
+        });
+    } else {
+      //console.log('Some other kind of source: ', sourceInfo);
+    }
+  }
+
+  console.log(vidSources.length + ' video sources found');
+}
+
+if (typeof MediaStreamTrack === 'undefined'){
+  console.log('This browser does not support MediaStreamTrack.\n\nTry Chrome Canary.');
+} else {
+  //MediaStreamTrack.getSources(gotSources);
 }
 
 $(document).ready(_init);
@@ -114,7 +150,7 @@ function onYouTubeIframeAPIReady() {
       'onError': onError
     },
     playerVars: {
-      controls: 1,
+      controls: config.players.controls,
       enablejsapi: 1,
       //end: 5,
       showinfo: 0,
@@ -167,10 +203,14 @@ function onError(event) {
     150: 'The owner of the requested video does not allow it to be played in embedded players.' // same as 101
   };
 
+  $('#error-msg').html(errors[errNo]);
+
   console.log(errors[errNo]);
 }
 
 function setVideo(videoId) {
+  $('#error-msg').html('');
+
   if (!ytReady)
     return;
 
@@ -306,6 +346,8 @@ function init() {
   setupControls();
 
   setupEvents();
+
+  setupWebcam();
 }
 
 function setupRendering() {
@@ -322,6 +364,11 @@ function setupControls() {
 
 function setupScene() {
   scene = new THREE.Scene();
+}
+
+function setupWebcam() {
+  webcamTexture = new THREEx.WebcamTexture();
+  webcamTexture.setSource(0);
 }
 
 function setupEvents() {

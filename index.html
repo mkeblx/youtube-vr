@@ -6,6 +6,7 @@
 
 <script src="js/libs/combined.min.js"></script>
 <script src="js/libs/CSS3DRenderer.js"></script>
+<script src="js/threex.webcamtexture.js"></script>
 <script src="js/helpers.js"></script>
 <script src="js/main.js"></script>
 </head>
@@ -34,6 +35,14 @@ body {
 
 #go {
   font-size: 16px;
+}
+
+#error-msg {
+  color: #fff;
+  font-family: sans-serif;
+  font-size: 14px;
+  line-height: 18px;
+  margin-top: 6px;
 }
 
 #container {
@@ -145,6 +154,7 @@ body {
 /* YT red: #cd201f */
 
 #progress-bar {
+  margin-top: 3px;
   background-color: #444;
   width: 640px;
   height: 5px;
@@ -158,7 +168,21 @@ body {
   display: block;
   background-color: #cd201f;
   height: 100%;
-  width: 10%;
+  width: 0%;
+}
+
+#progress-bar #marker {
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  border-radius: 9px;
+  float: right;
+  position: relative;
+  top: -5px;
+  left: 16px;
+  display: none;
+  /*transform: translate3d(0, 0, -8px) translate(16px, 360px);
+  transform-style: preserve-3d;*/
 }
 
 </style>
@@ -166,6 +190,7 @@ body {
 <div id="bar">
   <input id="url" placeholder="video URL" value="http://www.youtube.com/embed/OlXrjTh7vHc">
   <input type="button" id="go" value="Go">
+  <div id="error-msg"></div>
 </div>
 
 <div id="container" class="container">
@@ -176,11 +201,12 @@ body {
     <div id="main_pane" class="threed">
       <div id="main_player"></div>
       <div id="bot">
-        <div id="progress-bar"><span id="progress"></span></div>
+        <div id="progress-bar"><span id="progress"><div id="marker"></div></span></div>
       </div>
     </div>
-    <div id="help_pane">
+    <div id="help_pane" class="threed">
       <div>help options here</div>
+      <video id="video" width="320" height="240"></video>
     </div>
     <div id="bottom" class="threed">
       <img id="logo" src="img/YouTube-logo-light.png">
