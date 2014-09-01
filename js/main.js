@@ -22,23 +22,15 @@ var w, h;
 
 var updateFns = [];
 
-var players = [];
+var screens = [];
+var _screen;
+
 var player; // current
 
-var videos = [
-  'OlXrjTh7vHc'
-];
 var _videoId = null;
 
 var ytReady = false;
 
-
-var config = {
-  posScale: 300,
-  players: {
-    controls: 0
-  }
-};
 
 window.URL = window.URL || window.webkitURL || window.mozURL || window.msURL;
 
@@ -128,7 +120,8 @@ function gotSources(sourceInfos) {
 if (typeof MediaStreamTrack === 'undefined'){
   console.log('This browser does not support MediaStreamTrack.\n\nTry Chrome Canary.');
 } else {
-  //MediaStreamTrack.getSources(gotSources);
+  if (config.webcam.enabled && MediaStreamTrack.getSources)
+    MediaStreamTrack.getSources(gotSources);
 }
 
 $(document).ready(_init);
@@ -137,51 +130,48 @@ $(document).ready(_init);
 function onYouTubeIframeAPIReady() {
   ytReady = true;
 
-  var videoId = _videoId || videos[0];
+  setupScreens(config);
 
-  var opts = {
-    width: '640',
-    height: '360',
-    videoId: videoId,
-    events: {
-      'onReady': onPlayerReady,
-      'onPlaybackQualityChange': onPlayerPlaybackQualityChange,
-      'onStateChange': onPlayerStateChange,
-      'onError': onError
-    },
-    playerVars: {
-      controls: config.players.controls,
-      enablejsapi: 1,
-      //end: 5,
-      showinfo: 0,
-      theme: 'dark'
-    }
-  };
+  setInterval(updateProgress, 300);
+}
 
-  var _player = new YT.Player('main_player', opts);
+var screenIndex = 0;
+function setupScreens(config) {
+  for (var i = 0; i < config.screens.length; i++) {
+    var conf = config.screens[i];
 
-  players.push(_player);
-  player = players[0];
+    var vscreen = new VidScreen(conf);
+    screens.push(vscreen);
+  }
+  _screen = screens[screenIndex];
+  player = _screen.getPlayer();
 }
 
 function onPlayerReady(event) {
   //_player.cueVideoById(videos[0]);
   //event.target.playVideo();
-  setInterval(updateProgress, 300);
-
 }
 
 function updateProgress() {
-  var state = player.getPlayerState();
-  if (state == YT.PlayerState.CUED || state == -1)
+  if (!player || !player.getPlayerState)
     return;
+  var state = player.getPlayerState();
+  if (state == YT.PlayerState.CUED || state == -1) {
+    _screen.setProgress(0);
+    return;
+  }
+  if (state == YT.PlayerState.ENDED) {
+    _screen.setProgress(100);
+    return;
+  }
 
   var t = getCurrentTime();
   var d = getDuration();
   var pc = (t/d*100).toFixed(1)+'%';
   //console.log(t + ' : ' + d + ' : ' + pc);
 
-  $('#progress').css('width', (t/d*100).toFixed(1)+'%');
+  //player.getEl()$('.progress').css('width', (t/d*100).toFixed(1)+'%');
+  _screen.setProgress(t/d*100);
 }
 
 function onPlayerPlaybackQualityChange(event) {
@@ -299,7 +289,8 @@ function getPlayedRatio() {
 
 function moveScreen(amount) {
   screenDist += amount*25;
-  $('#main_pane').css('transform', 'rotateY(0deg) translate3d(0, 0, '+screenDist+'px) translate(-320px, -180px)');
+  console.log(screenDist);
+  _screen.getObject().css('transform', 'rotateY(0deg) translate3d(0, 0, '+screenDist+'px) translate(-320px, -180px)');
 }
 
 function YouTubeGetID(url){
@@ -317,6 +308,13 @@ function YouTubeGetID(url){
   return ID;
 }
 
+function setActiveScreen() {
+  screenIndex++;
+  screenIndex = (screenIndex < screens.length) ? screenIndex : 0;
+
+  _screen = screens[screenIndex];
+  player = _screen.getPlayer();
+}
 
 
 function load() {
@@ -347,7 +345,8 @@ function init() {
 
   setupEvents();
 
-  setupWebcam();
+  if (config.webcam.enabled)
+    setupWebcam();
 }
 
 function setupRendering() {
@@ -375,6 +374,7 @@ function setupEvents() {
   $(document).on('keydown', onkey);
 
   $('#go').on('click', navigate);
+  $('#url').focus(function() { $(this).select(); } );
   $('#url').keypress(function(e) {
     if (e.which == 13) {
       navigate();
@@ -391,9 +391,14 @@ function onkey(event) {
       console.log('fullscreen');
       cssContainer.mozRequestFullScreen({ vrDisplay: vrHMD });
       break;
+    case 9: // tab
+      setActiveScreen();
+      event.preventDefault();
+      break;
     case 32: // space
     case 107: // k
       togglePlay();
+      event.preventDefault();
       break;
     case 77: // m
       toggleMute();
@@ -411,15 +416,19 @@ function onkey(event) {
       break;
     case 37: // left
       seekBy(-5);
+      event.preventDefault();
       break;
     case 38: // up
       moveScreen(1);
+      event.preventDefault();
       break;
     case 39: // right
       seekBy(5);
+      event.preventDefault();
       break;
     case 40: // down
       moveScreen(-1);
+      event.preventDefault();
       break;
     case 72: // h
       toggleHelp();

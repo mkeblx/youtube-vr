@@ -7,7 +7,9 @@
 <script src="js/libs/combined.min.js"></script>
 <script src="js/libs/CSS3DRenderer.js"></script>
 <script src="js/threex.webcamtexture.js"></script>
+<script src="js/VidScreen.js"></script>
 <script src="js/helpers.js"></script>
+<script src="js/config.js"></script>
 <script src="js/main.js"></script>
 </head>
 
@@ -30,7 +32,7 @@ body {
 
 #url {
   font-size: 16px;
-  width: 400px;
+  width: 450px;
 }
 
 #go {
@@ -104,7 +106,11 @@ body {
 #main_pane {
   width: 640px;
   height: 360px;
-  transform: rotateY(0deg) translate3d(0, 0, 500px) translate(-320px, -180px);
+}
+
+#secondary_pane {
+  width: 640px;
+  height: 360px;
 }
 
 #help_pane {
@@ -153,25 +159,25 @@ body {
 
 /* YT red: #cd201f */
 
-#progress-bar {
+.progress-bar {
   margin-top: 3px;
   background-color: #444;
   width: 640px;
   height: 5px;
 }
 
-#progress-bar .loaded {
+.progress-bar .loaded {
   background-color: #888;
 }
 
-#progress-bar #progress {
+.progress-bar .progress {
   display: block;
   background-color: #cd201f;
   height: 100%;
   width: 0%;
 }
 
-#progress-bar #marker {
+.progress-bar .marker {
   width: 16px;
   height: 16px;
   background-color: white;
@@ -198,12 +204,12 @@ body {
        This and all its children will have transform-style: preserve-3d set via the class, as well as
        transform-origin set to 0,0 -->
   <div id="camera" class="threed">
+
     <div id="main_pane" class="threed">
-      <div id="main_player"></div>
-      <div id="bot">
-        <div id="progress-bar"><span id="progress"><div id="marker"></div></span></div>
-      </div>
     </div>
+    <div id="secondary_pane" class="threed">
+    </div>
+
     <div id="help_pane" class="threed">
       <div>help options here</div>
       <video id="video" width="320" height="240"></video>
@@ -211,6 +217,7 @@ body {
     <div id="bottom" class="threed">
       <img id="logo" src="img/YouTube-logo-light.png">
     </div>
+
   </div>
 </div>
 
