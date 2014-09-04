@@ -8,7 +8,7 @@ var vrHMD, vrSensor;
 var cssContainer;
 var cssCamera;
 
-var screenDist = 500;
+var screenDist = 650;
 
 var container;
 
@@ -290,7 +290,7 @@ function getPlayedRatio() {
 function moveScreen(amount) {
   screenDist += amount*25;
   console.log(screenDist);
-  _screen.getObject().css('transform', 'rotateY(0deg) translate3d(0, 0, '+screenDist+'px) translate(-320px, -180px)');
+  screens[0].getObject().css('transform', 'rotateY(0deg) translate3d(0, 0, '+screenDist+'px) translate(-320px, -180px)');
 }
 
 function YouTubeGetID(url){

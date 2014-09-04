@@ -1,6 +1,6 @@
 
 var config = {
-  posScale: 300,
+  posScale: 700,
   players: {
     controls: 0
   },
@@ -14,10 +14,15 @@ var config = {
     orientation: [0,0,0],
     videoId: 'OlXrjTh7vHc'
   },{
-    playerId: 'secondary_pane',
+    playerId: 'second_pane',
     position: [100,0,300],
     orientation: [0,66,0],
     videoId: 'DhcOMOWRMnA'
+  },{
+    playerId: 'third_pane',
+    position: [300,0,900],
+    orientation: [0,-66,0],
+    videoId: 'MEJjDhfULds'
   }
   ]
 };

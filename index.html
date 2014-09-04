@@ -105,12 +105,17 @@ body {
  */
 #main_pane {
   width: 640px;
-  height: 360px;
+  min-height: 360px;
 }
 
-#secondary_pane {
+#second_pane {
   width: 640px;
-  height: 360px;
+  min-height: 360px;
+}
+
+#third_pane {
+  width: 640px;
+  min-height: 360px;
 }
 
 #help_pane {
@@ -121,6 +126,7 @@ body {
   /*text-align: center;*/
   font-size: 24px;
   background-color: #444;
+  display: none;
 }
 
 #pane2 {
@@ -137,15 +143,15 @@ body {
 }
 
 #bottom {
-  width: 1000px; height: 1000px;
-  transform: translate(-500px, 500px) rotateX(-90deg) translateZ(-200px);
+  width: 800px; height: 800px;
+  transform: translate(-400px, 400px) rotateX(-90deg) translateZ(-200px);
   color: red;
   font-size: 100px;
 }
 
 #bottom #logo {
   display: block;
-  margin: auto;
+  margin: 100px auto;
 }
 
 
@@ -205,10 +211,9 @@ body {
        transform-origin set to 0,0 -->
   <div id="camera" class="threed">
 
-    <div id="main_pane" class="threed">
-    </div>
-    <div id="secondary_pane" class="threed">
-    </div>
+    <div id="main_pane" class="threed"></div>
+    <div id="second_pane" class="threed"></div>
+    <div id="third_pane" class="threed"></div>
 
     <div id="help_pane" class="threed">
       <div>help options here</div>
