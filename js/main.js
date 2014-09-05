@@ -92,7 +92,7 @@ function _init() {
   if (navigator.getVRDevices) {
     navigator.getVRDevices().then(vrDeviceCallback);
   } else {
-
+    $('#webvr-msg').show();
   }
 
 
