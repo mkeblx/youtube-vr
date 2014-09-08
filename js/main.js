@@ -136,18 +136,6 @@ function onYouTubeIframeAPIReady() {
   setInterval(updateProgress, 300);
 }
 
-function setupScreens(config) {
-  for (var i = 0; i < config.screens.length; i++) {
-    var conf = config.screens[i];
-
-    var vscreen = new VidScreen(conf);
-    screens.push(vscreen);
-  }
-
-  _screen = screens[0];
-  player = _screen.getPlayer();
-}
-
 function onPlayerReady(event) {
   //_player.cueVideoById(videos[0]);
   //event.target.playVideo();
@@ -323,8 +311,8 @@ function load() {
   if (hash != '') {
     var _videoIds = _.first(hash.split(','), config.screens.length);
 
-    for (var i = 0; i < _videoIds.length; i++) {
-      config.screens[i].videoId = _videoIds[i];
+    for (var i = 0; i < config.screens.length; i++) {
+      config.screens[i].videoId = (i < _videoIds.length) ? _videoIds[i] : null;
     }
   }
 
@@ -352,6 +340,22 @@ function init() {
 
   if (config.webcam.enabled)
     setupWebcam();
+}
+
+function setupScreens(config) {
+  for (var i = 0; i < config.screens.length; i++) {
+    var conf = config.screens[i];
+
+    if (conf.videoId == null) {
+      continue;
+    }
+
+    var vscreen = new VidScreen(conf);
+    screens.push(vscreen);
+  }
+
+  _screen = screens[0];
+  player = _screen.getPlayer();
 }
 
 function setupRendering() {
