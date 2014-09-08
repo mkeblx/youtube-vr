@@ -24,10 +24,11 @@ var updateFns = [];
 
 var screens = [];
 var _screen;
+var screenIndex = 0;
 
 var player; // current
 
-var _videoId = null;
+var _videoIds = [];
 
 var ytReady = false;
 
@@ -135,7 +136,6 @@ function onYouTubeIframeAPIReady() {
   setInterval(updateProgress, 300);
 }
 
-var screenIndex = 0;
 function setupScreens(config) {
   for (var i = 0; i < config.screens.length; i++) {
     var conf = config.screens[i];
@@ -143,7 +143,8 @@ function setupScreens(config) {
     var vscreen = new VidScreen(conf);
     screens.push(vscreen);
   }
-  _screen = screens[screenIndex];
+
+  _screen = screens[0];
   player = _screen.getPlayer();
 }
 
@@ -320,7 +321,11 @@ function setActiveScreen() {
 function load() {
   var hash = window.location.hash.substr(1);
   if (hash != '') {
-    _videoId = hash;
+    var _videoIds = _.first(hash.split('|'), config.screens.length);
+
+    for (var i = 0; i < _videoIds.length; i++) {
+      config.screens[i].videoId = _videoIds[i];
+    }
   }
 
   var tag = document.createElement('script');
