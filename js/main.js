@@ -321,7 +321,7 @@ function setActiveScreen() {
 function load() {
   var hash = window.location.hash.substr(1);
   if (hash != '') {
-    var _videoIds = _.first(hash.split('|'), config.screens.length);
+    var _videoIds = _.first(hash.split(','), config.screens.length);
 
     for (var i = 0; i < _videoIds.length; i++) {
       config.screens[i].videoId = _videoIds[i];
