@@ -133,7 +133,7 @@ function onYouTubeIframeAPIReady() {
 
   setupScreens(config);
 
-  setInterval(updateProgress, 300);
+  setInterval(updateVideos, 1000/3);
 }
 
 function onPlayerReady(event) {
@@ -141,26 +141,10 @@ function onPlayerReady(event) {
   //event.target.playVideo();
 }
 
-function updateProgress() {
-  if (!player || !player.getPlayerState)
-    return;
-  var state = player.getPlayerState();
-  if (state == YT.PlayerState.CUED || state == -1) {
-    _screen.setProgress(0);
-    return;
+function updateVideos() {
+  for (var i = 0; i < screens.length; i++) {
+    screens[i].update();
   }
-  if (state == YT.PlayerState.ENDED) {
-    _screen.setProgress(100);
-    return;
-  }
-
-  var t = getCurrentTime();
-  var d = getDuration();
-  var pc = (t/d*100).toFixed(1)+'%';
-  //console.log(t + ' : ' + d + ' : ' + pc);
-
-  //player.getEl()$('.progress').css('width', (t/d*100).toFixed(1)+'%');
-  _screen.setProgress(t/d*100);
 }
 
 function onPlayerPlaybackQualityChange(event) {
@@ -168,7 +152,7 @@ function onPlayerPlaybackQualityChange(event) {
 }
 
 function onPlayerStateChange(event) {
-  updateProgress();
+  updateVideos();
 }
 
 function onError(event) {
@@ -297,14 +281,13 @@ function YouTubeGetID(url){
   return ID;
 }
 
-function setActiveScreen() {
+function setActiveScreen(index) {
   screenIndex++;
   screenIndex = (screenIndex < screens.length) ? screenIndex : 0;
 
   _screen = screens[screenIndex];
   player = _screen.getPlayer();
 }
-
 
 function load() {
   var hash = window.location.hash.substr(1);

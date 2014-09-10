@@ -64,7 +64,22 @@ VidScreen.prototype.setProgress = function(pc) {
 };
 
 VidScreen.prototype.update = function(t) {
+  if (!this._player || !this._player.getPlayerState)
+    return;
 
+  var state = this._player.getPlayerState();
+  var pc;
+  if (state == YT.PlayerState.CUED || state == -1) {
+    pc = 0;
+  } else if (state == YT.PlayerState.ENDED) {
+    pc = 100;
+  } else {
+    var t = this._player.getCurrentTime();
+    var d = this._player.getDuration();
+    pc = t/d*100;
+  }
+
+  this.setProgress(pc);
 };
 
 VidScreen.prototype.destroy = function() {
