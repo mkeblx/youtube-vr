@@ -1,6 +1,6 @@
 
 var config = {
-  posScale: 700,
+  posScale: 300,
   players: {
     controls: 0
   },

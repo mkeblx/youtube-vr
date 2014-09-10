@@ -134,17 +134,42 @@ function onYouTubeIframeAPIReady() {
   setupScreens(config);
 
   setInterval(updateVideos, 1000/3);
-}
 
-function onPlayerReady(event) {
-  //_player.cueVideoById(videos[0]);
-  //event.target.playVideo();
+  //setInterval(selectScreen, 1000/3);
 }
 
 function updateVideos() {
   for (var i = 0; i < screens.length; i++) {
     screens[i].update();
   }
+}
+
+var prevTheta = 0;
+function selectScreen() {
+  if (!vrSensor)
+    return;
+
+  var theta = vrSensor.getState().orientation.y.toFixed(4);// * 180 / Math.PI;
+  $('#angle').html('angle: ' + theta);
+  console.log(theta);
+
+  //TODO: use positional data to make accurate
+
+  var a = 0.25;
+  if (theta < a || theta > -a) { // main_pane
+    setActiveScreen(0);
+  } else if (theta > a && screens.length > 1) { // second_pane
+    setActiveScreen(1);
+  } else if (theta < -a && screens.length > 2) { // third_pane
+    setActiveScreen(2);
+  }
+
+  prevTheta = theta;
+}
+
+function onPlayerReady(event) {
+  //_player.cueVideoById(videos[0]);
+  //event.target.playVideo();
 }
 
 function onPlayerPlaybackQualityChange(event) {
@@ -282,8 +307,12 @@ function YouTubeGetID(url){
 }
 
 function setActiveScreen(index) {
-  screenIndex++;
-  screenIndex = (screenIndex < screens.length) ? screenIndex : 0;
+  if (index == undefined) {
+    screenIndex++;
+    screenIndex = (screenIndex < screens.length) ? screenIndex : 0;
+  } else {
+    screenIndex = Math.max(index, screens.length-1);
+  }
 
   _screen = screens[screenIndex];
   player = _screen.getPlayer();
