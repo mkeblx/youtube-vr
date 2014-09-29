@@ -1,5 +1,8 @@
 'use strict';
 
+var fbRef, room;
+var social = true;
+
 var clock = new THREE.Clock();
 var time = Date.now();
 
@@ -221,6 +224,8 @@ function togglePlay() {
   } else {
     playVideo();
   }
+
+  updateState(state);
 }
 
 function playVideo() {
@@ -231,8 +236,18 @@ function pauseVideo() {
   player.pauseVideo();
 }
 
+function stopVideo() {
+  player.stopVideo();
+}
+
 function seekTo(seconds) {
   player.seekTo(seconds, true);
+
+  if (room) {
+    room.child('video').update({
+      time: seconds.toFixed(2)
+    });
+  }
 }
 
 function seekToPc(percent) {
@@ -247,10 +262,6 @@ function seekBy(percent) {
   var pc = Math.max(Math.min(r*100 + percent, 100), 0);
   var secs = pc/100 * dur;
   seekTo(secs);
-}
-
-function stopVideo() {
-  player.stopVideo();
 }
 
 function toggleMute() {
@@ -289,6 +300,16 @@ function moveScreen(amount) {
   screenDist += amount*25;
   console.log(screenDist);
   screens[0].getObject().css('transform', 'rotateY(0deg) translate3d(0, 0, '+screenDist+'px) translate(-320px, -180px)');
+}
+
+function updateState(state) {
+  var _state = state != undefined ? state : player.getPlayerState();
+
+  if (room) {
+    room.child('video').update({
+      state: _state
+    });
+  }
 }
 
 function YouTubeGetID(url){
@@ -333,7 +354,12 @@ function load() {
   var firstScriptTag = document.getElementsByTagName('script')[0];
   firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-  console.log('loading');
+  var roomId = hash;
+
+  if (roomId != '') {
+    social = true;
+    setupFb(roomId);
+  }
 
   init();
   animate();
@@ -368,6 +394,47 @@ function setupScreens(config) {
 
   _screen = screens[0];
   player = _screen.getPlayer();
+}
+
+function setupFb(roomId) {
+  fbRef = new Firebase(config.fbUrl);
+
+  var rooms = fbRef.child('rooms');
+  room = rooms.child(roomId);
+
+
+  room.once('value', function(snapshot) {
+    var exists = snapshot.val() !== null;
+
+    if (!exists) {
+      room.set({
+        video: {
+          videoId: roomId,
+          state: 0,
+          time: '0' // abs: (n)secs || rel: x.x%
+        }
+      });
+    }
+  });
+
+  room.on('value', function(snapshot) {
+    var val = snapshot.val();
+
+    seekTo(val.video.time);
+
+    var state = player.getPlayerState();
+    var newState = val.video.state;
+
+    if (state != newState && 0) {
+      if (newState == YT.PlayerState.PLAYING) {
+        playVideo();
+      } else if (newState == YT.PlayerState.PAUSED || newState == YT.PlayerState.ENDED) {
+        pauseVideo();
+      }
+    }
+
+    console.log(val);
+  });
 }
 
 function setupRendering() {
@@ -406,7 +473,7 @@ function setupEvents() {
 }
 
 function onkey(event) {
-  console.log(event.which);
+  //console.log(event.which);
   switch (event.which) {
     case 70: // f
       console.log('fullscreen');

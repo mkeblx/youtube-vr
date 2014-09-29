@@ -1,5 +1,6 @@
 
 var config = {
+  fbUrl: 'https://google-vr.firebaseio.com/youtube',
   posScale: 300,
   players: {
     controls: 0
