@@ -240,12 +240,15 @@ function stopVideo() {
   player.stopVideo();
 }
 
-function seekTo(seconds) {
+function seekTo(seconds, update) {
+  seconds = Number(seconds);
   player.seekTo(seconds, true);
 
-  if (room) {
+  console.log(seconds);
+
+  if (room && update != undefined && update) {
     room.child('video').update({
-      time: seconds.toFixed(2)
+      time: seconds
     });
   }
 }
@@ -420,7 +423,9 @@ function setupFb(roomId) {
   room.on('value', function(snapshot) {
     var val = snapshot.val();
 
-    seekTo(val.video.time);
+    if (Math.abs(player.getCurrentTime() - val.video.time) > 2){
+      seekTo(val.video.time, false);
+    }
 
     var state = player.getPlayerState();
     var newState = val.video.state;
