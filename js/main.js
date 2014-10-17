@@ -496,7 +496,8 @@ function onkey(event) {
     case 77: // m
       toggleMute();
       break;
-    case 49: // numbers
+    case 48: // numbers
+    case 49:
     case 50:
     case 51:
     case 52:
